@@ -12,7 +12,7 @@ buildscript {
 			url 'http://jcenter.bintray.com'
 		}
     }
-	
+
     dependencies {
 		classpath 'nl.javadude.gradle.plugins:license-gradle-plugin:0.10.0'
 		classpath 'net.saliman:gradle-cobertura-plugin:1.1.2'
@@ -74,7 +74,7 @@ task build {
 
 
 configure(subprojects) {
-	
+
 	repositories {
 		mavenCentral()
 		maven {
@@ -86,10 +86,11 @@ configure(subprojects) {
 }
 
 // Add Java plugin for all non-Flex subprojects
-configure(subprojects.findAll { it.name.startsWith('granite') && !it.name.startsWith('granite-client-flex') && it.name != 'granite-server' && it.name != 'granite-generator-share' }) { subproject ->
+configure(subprojects.findAll()) { subproject ->
 
 	apply plugin: 'java'
 	apply plugin: 'eclipse'
+	apply plugin: 'maven'
 
     compileJava {
         sourceCompatibility=1.6
@@ -128,16 +129,16 @@ configure(subprojects.findAll { it.name.startsWith('granite') && !it.name.starts
 		"-Xlint:-deprecation",
 		"-Xlint:-unchecked"
 	]
-	
+
 	configurations {
 		create('javadoc')
 	}
-	
+
 	task sourcesJar(type: Jar, dependsOn: 'classes') {
 		classifier = 'sources'
 		from sourceSets.main.allSource
 	}
-	
+
 	task javadocJar(type: Jar, dependsOn: 'javadoc') {
 		classifier = 'javadoc'
 		from javadoc.destinationDir
@@ -153,10 +154,10 @@ configure(subprojects.findAll { it.name.startsWith('granite') && !it.name.starts
 		archives sourcesJar
 		archives javadocJar
 	}
-	
+
 	dependencies {
 		javadoc 'log4j:log4j:1.2.17'
-		
+
 		testCompile 'junit:junit:4.11'
 	}
 
@@ -167,9 +168,9 @@ configure(subprojects.findAll { it.name.startsWith('granite') && !it.name.starts
 
 	javadoc {
 		title 'GraniteDS API Documentation'
-		
+
 		classpath.add(configurations.javadoc)
-		
+
 		configure(options) {
 			version = true
 			author = true
@@ -178,15 +179,19 @@ configure(subprojects.findAll { it.name.startsWith('granite') && !it.name.starts
 			docTitle = 'GraniteDS API Documentation - ' + granitedsVersion
 			links = rootProject.ext.javadocLinks
 		}
-	}	
+
+		tasks.withType(Javadoc).all { enabled = false }
+	}
+
+	version = '0.0.1'
 }
 
 // Add GradleFX plugin for all Flex subprojects
 configure(subprojects.findAll { it.name.startsWith('granite-client-flex') }) { subproject ->
-	
+
 	apply plugin: 'gradlefx'
 	apply plugin: 'flashbuilder'
-	
+
 	output = 'libs/' + subproject.name + '-' + granitedsVersion
 }
 
@@ -195,7 +200,7 @@ configure(subprojects.findAll { it.name.startsWith('granite-client-flex') }) { s
 configure(subprojects.findAll { it.name != 'granite-server' && it.name != 'granite-generator-share' && it.name != 'reference-docs' }) { subproject ->
 
 	apply plugin: ExtLicensePlugin
-	
+
 	license {
 		header rootProject.file('HEADER-' + subproject.moduleLicense + '.txt')
 		strictCheck true
@@ -209,15 +214,15 @@ import nl.javadude.gradle.plugins.license.LicensePlugin
 
 
 class ExtLicensePlugin extends LicensePlugin {
-	
+
 	private static Logger logger = Logging.getLogger(ExtLicensePlugin);
-	
+
 	void apply(Project project) {
         this.project = project
 
         extension = createExtension()
         configureExtensionRule()
-		
+
         project.plugins.withType(JavaBasePlugin) {
             extension.sourceSets.all { SourceSet sourceSet ->
                 def sourceSetTaskName = sourceSet.getTaskName(taskBaseName, null)
@@ -237,10 +242,10 @@ class ExtLicensePlugin extends LicensePlugin {
                 configureForSourceSet(sourceSet, formatTask)
             }
         }
-		
+
 		project.plugins.withType(org.gradlefx.plugins.GradleFxPlugin) {
 			logger.info("Adding license tasks for Flex");
-			
+
 			License checkTask = project.tasks.create('licenseFlex', License)
 			checkTask.check = true
 			checkTask.description = 'Scanning license on Flex files'
@@ -248,30 +253,30 @@ class ExtLicensePlugin extends LicensePlugin {
 
 			// Add license checking into check lifecycle, since its a type of code quality plugin
 			project.tasks['compileFlex'].dependsOn checkTask
-			
+
 			// Add independent license task, which will perform format
 			License formatTask = project.tasks.create('licenseFormatFlex', License)
 			formatTask.check = false
 			formatTask.description = 'Scanning license on Flex files'
 			formatTask.source = [ 'src/main/flex', 'src/test/flex' ]
-        }		
-			
+        }
+
         configureTaskRule()
     }
 
 	protected void configureForSourceSet(SourceSet sourceSet, nl.javadude.gradle.plugins.license.License task) {
 		super.configureForSourceSet(sourceSet, task)
-		
+
 		// Override default allSource and apply only to all Java source files from SourceSet (excluding resources)
 		task.source = sourceSet.allJava
-	}	
+	}
 }
 
 // Common configuration for all subprojects
 // signing + maven deployment
 configure(subprojects.findAll { it.name != 'reference-docs' && !it.name.endsWith('-eclipse') && !it.name.endsWith('-tests') &&
 	!it.name.startsWith('granite-common') && it.name != 'granite-amf' && it.name != 'granite-jmf' }) { subproject ->
-	
+
 	apply plugin: 'maven'
 	apply plugin: 'signing'
 
@@ -281,13 +286,13 @@ configure(subprojects.findAll { it.name != 'reference-docs' && !it.name.endsWith
 	configurations {
 		deployerJars
 	}
-	
+
 	dependencies {
 		deployerJars 'org.apache.maven.wagon:wagon-http:2.2'
 	}
-	
+
 	signing {
-		required { 
+		required {
 			gradle.taskGraph.hasTask(':dist:uploadArchives') || gradle.taskGraph.hasTask(':dist:bintrayUpload')
 		}
 		sign configurations.archives
@@ -316,29 +321,29 @@ configure(subprojects.findAll { it.name != 'reference-docs' && !it.name.endsWith
 	uploadArchives {
 		repositories {
 			mavenDeployer {
-				beforeDeployment { 
+				beforeDeployment {
 					MavenDeployment deployment -> signing.signPom(deployment)
 				}
-				
+
 				repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
 					authentication(userName: sonatypeOssUserName, password: sonatypeOssPassword)
 				}
 				snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
 					authentication(userName: sonatypeOssUserName, password: sonatypeOssPassword)
 				}
-				
+
 				pom.project {
 					name subproject.description
 					packaging 'swc'
 					description subproject.description
 					url 'http://www.graniteds.org'
-					
+
 					scm {
 						url 'scm:git@github.com:graniteds/graniteds.git'
 						connection 'scm:git@github.com:graniteds/graniteds.git'
 						developerConnection 'scm:git@github.com:graniteds/graniteds.git'
 					}
-					
+
 					licenses {
 							if (subproject.moduleLicense == 'lgpl') {
 								license {

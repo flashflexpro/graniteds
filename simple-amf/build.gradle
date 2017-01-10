@@ -1,0 +1,8 @@
+group = 'com.flashflexpro'
+version = '0.0.1'
+
+
+dependencies {
+    compile project( ':granite-server-core' )
+    compile project( ':granite-amf' )
+}
