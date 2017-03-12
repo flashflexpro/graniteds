@@ -63,7 +63,7 @@ task dist(type: Zip, dependsOn: ':granite-eclipse:buildUpdateSite') {
 
 	into ('graniteds-' + granitedsVersion)
 
-	from file('README.adoc')
+	from file('README.md')
 
 	from file('LICENSES.adoc')
 
