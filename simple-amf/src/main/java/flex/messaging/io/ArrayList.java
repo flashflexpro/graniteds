@@ -34,7 +34,7 @@ public class ArrayList<T> extends java.util.ArrayList<T> implements Externalizab
             }
         }
         else{
-            throw new RuntimeException( "can't handle :" + tmp );
+            throw new UnsupportedOperationException( "Can't handle Type:" + tmp.getClass() + " Please report." );
         }
     }
 

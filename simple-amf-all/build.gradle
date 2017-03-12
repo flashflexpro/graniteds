@@ -5,11 +5,18 @@ version = '0.0.1'
 sourceSets {
     main {
         java {
-            srcDirs = [project( ":granite-jmf" ).file( 'src/main/java' ),
-                       project( ":granite-server-core" ).file( 'src/main/java' ),
-                       project( ":granite-common" ).file( 'src/main/java' ),
-                       project( ":simple-amf" ).file( 'src/main/java' ),
-                       project( ":granite-amf" ).file( 'src/main/java' )]
+            source project( ":granite-jmf" ).sourceSets.main.java
+            source project( ":granite-server-core" ).sourceSets.main.java
+            source project( ":granite-common" ).sourceSets.main.java
+            source project( ":simple-amf" ).sourceSets.main.java
+            source project( ":granite-amf" ).sourceSets.main.java
+        }
+        resources {
+            source project( ":granite-jmf" ).sourceSets.main.resources
+            source project( ":granite-server-core" ).sourceSets.main.resources
+            source project( ":granite-common" ).sourceSets.main.resources
+            source project( ":simple-amf" ).sourceSets.main.resources
+            source project( ":granite-amf" ).sourceSets.main.resources
         }
     }
 }
@@ -27,5 +34,51 @@ dependencies {
     compile 'javax.jms:jms-api:1.1-rev-1'
     compile 'javax.transaction:transaction-api:1.1-rev-1'
     compile 'javax.enterprise:cdi-api:1.0-SP4' // Required for @NonBinding annotation on @DataEnabled
+}
 
+
+
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            pom.project {
+                name 'flashflexpro.com simple AMF'
+                url 'https://github.com/flashflexpro'
+
+                scm {
+                    url 'scm:git@github.com:flashflexpro/open.git'
+                    connection 'scm:git@github.com:flashflexpro/open.git'
+                    developerConnection 'scm:git@github.com:flashflexpro/open.git'
+                }
+
+                licenses {
+                    if( moduleLicense == 'gpl' ){
+                        license {
+                            name 'GNU General Public License, Version 3, 29 June 2007'
+                            url 'http://www.gnu.org/licenses/gpl-3.0.en.html'
+                            distribution 'repo'
+                        }
+                    }
+                }
+
+                developers {
+                    developer {
+                        id 'fwolff'
+                        name 'Franck Wolff'
+                    }
+                    developer {
+                        id 'wdrai'
+                        name 'William Drai'
+                    }
+                    developer {
+                        id 'flashflexpro'
+                        name 'Gary Yang'
+                    }
+                }
+            }
+
+            // Generated dependencies are not suitable for maven pom, remove everything for now
+            pom.whenConfigured { pom -> pom.dependencies.clear() }
+        }
+    }
 }
